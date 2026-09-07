@@ -1,0 +1,26 @@
+version: "1"
+sections:
+  - id: cover
+    description: Title, use case, run status
+  - id: executive_summary
+    description: Narrative and headline KPIs for this use case
+  - id: kpi_grid
+    description: Numeric highlights from the run
+  - id: chart_block
+    description: Mix or variance chart from a numeric/category pair
+  - id: data_sheet
+    description: Full flattened rows for a port, same columns as Excel export
+  - id: exception_sheet
+    description: Exception / flagged / residual rows
+  - id: breakdown_sheet
+    description: Grouped totals by a category column
+  - id: sheet_notes
+    description: Why each sheet exists in this use case
+  - id: column_guide
+    description: Each column's origin and English derivation
+  - id: row_justification
+    description: Why column appended to exception rows
+  - id: derivation_appendix
+    description: Formulas, keys, and policy for audit
+  - id: signoff
+    description: Controller sign-off block

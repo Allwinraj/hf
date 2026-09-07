@@ -1,0 +1,6 @@
+name: math
+version: v1
+modes: [calculation, rule, hybrid]
+prompts: {}
+config:
+  schema_fields: [mode, formula_en, catalog_id, shape, precision, rounding, empty_rule, ast, gate_ast]

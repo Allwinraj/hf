@@ -1,0 +1,7 @@
+name: matcher
+version: v1
+modes: [dedupe, structural, semantic]
+prompts: {}
+config:
+  schema_fields: [mode, keys, window_days, confidence_threshold, flags]
+  notes: Amount and variance tolerances are Math Engine concerns.

@@ -1,0 +1,7 @@
+name: output
+version: v1
+modes: [excel, pdf, both]
+prompts: {}
+config:
+  schema_fields: [mode, title, filename, tabs, charts, theme, formats]
+  notes: Local Excel/PDF download only. Alert Dispatcher is out of v1.

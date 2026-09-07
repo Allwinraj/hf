@@ -1,0 +1,34 @@
+version: "1"
+widgets:
+  - id: kpi_card
+    description: Single numeric highlight (count, sum, or rate) with optional delta and sparkline
+  - id: bar_chart
+    description: Category counts or sums as vertical bars
+  - id: pie_chart
+    description: Category share as a pie
+  - id: donut_chart
+    description: Category share as a donut
+  - id: line_chart
+    description: Numeric series over a date column when present, else row order
+  - id: grouped_bar_chart
+    description: Actual versus expected amounts by category
+  - id: stacked_bar_chart
+    description: Category stacked by status or verdict
+  - id: variance_chart
+    description: Diverging actual minus expected bars
+  - id: area_chart
+    description: Date-axis filled series of a numeric field
+  - id: insight_table
+    description: Compact result or exception rows
+  - id: breakdown_table
+    description: Group-by totals with a totals row
+  - id: exception_table
+    description: Flagged, exception, or residual rows with severity
+  - id: rate_gauge
+    description: Match or approval rate as a percentage
+  - id: narrative_card
+    description: Two to four sentences from computed facts, never invented numbers
+  - id: action_list
+    description: Recommended next actions from flagged or exception ports
+  - id: mail_reply_table
+    description: Draft mailbox replies with send status for human approval

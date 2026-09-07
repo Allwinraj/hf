@@ -1,0 +1,19 @@
+# Role → model mapping. Env deployment IDs win for SAP AI Core.
+# Gemini uses GEMINI_MODEL for every role unless a per-role override is set.
+
+roles:
+  extraction: gpt-4o-mini
+  reasoning: gpt-5.5
+  general: gpt-4.1
+  reconciliation: gpt-4o
+
+gemini:
+  default_model: gemini-flash-lite-latest
+  roles: {}
+
+sap_ai_core:
+  env_deployment_ids:
+    extraction: AICORE_GPT40_MINI_DEPLOYMENT_ID
+    reasoning: AICORE_GPT55_DEPLOYMENT_ID
+    general: AICORE_GPT41_DEPLOYMENT_ID
+    reconciliation: AICORE_GPT40_DEPLOYMENT_ID

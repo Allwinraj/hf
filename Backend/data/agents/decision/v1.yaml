@@ -1,0 +1,6 @@
+name: decision
+version: v1
+modes: [anomaly, policy, approval]
+prompts: {}
+config:
+  schema_fields: [mode, policy, authority, confidence_threshold, temperature]

@@ -1,0 +1,6 @@
+name: ingestion
+version: v1
+modes: [data, knowledge]
+prompts: {}
+config:
+  schema_fields: [mode, path, sheet, header_row, schema_overrides]

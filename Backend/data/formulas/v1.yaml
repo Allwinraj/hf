@@ -1,0 +1,156 @@
+version: "1"
+formulas:
+  - id: min_pct_amount_tolerance
+    description: Flag when abs(actual - expected) exceeds the lesser of pct of expected or a dollar cap
+    aliases:
+      - whichever is smaller
+      - whichever is lower
+      - lesser of
+      - 1%
+      - one percent
+      - 1 percent
+      - 2%
+      - 2 percent
+      - tolerance
+      - min of
+      - percent or
+      - or usd
+      - or $
+      - fifty dollars
+      - paid vs invoice
+      - amount received
+      - invoice total
+    mode: hybrid
+    shape: per_row
+    output: over_tolerance
+    inputs: [actual, expected, pct, amount]
+    ast: abs(actual - expected)
+    gate_ast: abs(actual - expected) > min(pct * expected, amount)
+    slots:
+      pct: {type: decimal, example: 0.01}
+      amount: {type: decimal, example: 50}
+    input_hints:
+      actual: [amount_received, paid_amount, amount, invoice_amount, invoiced, invoice]
+      expected: [invoice_total, total_amount, invoice_amount, po_amount, po_line_amount, po]
+  - id: running_balance
+    description: Sequential previous plus deposit minus withdrawal
+    aliases:
+      - running balance
+      - previous plus
+      - deposit
+      - withdrawal
+      - cash position
+      - cash balance
+      - opening balance
+      - row-by-row
+    mode: calculation
+    shape: sequential
+    output: running_balance
+    inputs: [deposit, withdrawal]
+    ast: previous + deposit - withdrawal
+    slots: {}
+    input_hints:
+      deposit: [deposit, in, credit]
+      withdrawal: [withdrawal, out, debit]
+  - id: stated_vs_computed_balance
+    description: Flag when computed running balance differs from the stated statement balance
+    aliases:
+      - stated balance
+      - statement balance
+      - computed balance
+      - differs from stated
+      - balance differs
+    mode: rule
+    shape: per_row
+    output: balance_break
+    inputs: [running_balance, stated_balance, amount]
+    ast: abs(running_balance - stated_balance) > amount
+    slots:
+      amount: {type: decimal, example: 0, default: 0}
+    input_hints:
+      running_balance: [running_balance, computed_balance]
+      stated_balance: [stated_balance, statement_balance, balance]
+  - id: entity_pair_net
+    description: Sum receivables minus payables by entity pair
+    aliases:
+      - entity pair
+      - receivables minus payables
+      - receivable
+      - payable
+      - net intercompany
+      - netting
+      - by entity
+    mode: calculation
+    shape: aggregate
+    output: net
+    inputs: [receivable, payable]
+    ast: sum(receivable) - sum(payable)
+    group_by: [entity_a, entity_b]
+    slots: {}
+    input_hints:
+      receivable: [receivable, ar, ar_amount]
+      payable: [payable, ap, ap_amount]
+  - id: material_net_break
+    description: Flag when absolute net balance exceeds a materiality amount
+    aliases:
+      - material
+      - net break
+      - materiality
+      - over $
+      - highlight any
+    mode: hybrid
+    shape: per_row
+    output: net_abs
+    inputs: [net, amount]
+    ast: abs(net)
+    gate_ast: abs(net) > amount
+    slots:
+      amount: {type: decimal, example: 1000}
+    input_hints:
+      net: [net, net_balance]
+  - id: variance_amount
+    description: Actual minus budget per row
+    aliases:
+      - actual minus budget
+      - vs budget
+      - versus budget
+      - variance amount
+    mode: calculation
+    shape: per_row
+    output: variance_amount
+    inputs: [actual, budget]
+    ast: actual - budget
+    slots: {}
+    input_hints:
+      actual: [actual]
+      budget: [budget]
+  - id: variance_pct
+    description: Variance amount divided by budget
+    aliases:
+      - variance percent
+      - variance pct
+      - variance %
+    mode: calculation
+    shape: per_row
+    output: variance_pct
+    inputs: [variance_amount, budget]
+    ast: (variance_amount / budget) if budget != 0 else None
+    slots: {}
+    input_hints:
+      variance_amount: [variance_amount, var]
+      budget: [budget]
+  - id: group_sum
+    description: Sum a measure within a group
+    aliases:
+      - group sum
+      - sum a measure
+      - total by group
+    mode: calculation
+    shape: aggregate
+    output: group_total
+    inputs: [measure]
+    ast: sum(measure)
+    group_by: []
+    slots: {}
+    input_hints:
+      measure: [measure, amount]
