@@ -174,3 +174,18 @@ Use the body for quantity, location, cost centre, due date and budget. Use the P
 Fail the PR if it is not a catalogue item, the supplier is not approved for IT hardware, the total including tax and delivery is over the stated budget, or they substituted without Digital Technology approval. Warn-only is not enough for those four.
 Draft from Nexus Procurement, plain professional tone, reply to the requester. A human must click Send or Don't send on the dashboard — never auto-send.
 Same layout for other unread PR subjects. Skip mail whose subject is not a PR or purchase request.
+
+
+---
+applications:
+  - name: nexus-ui
+    memory: 128M
+    disk_quota: 256M
+    instances: 1
+    timeout: 180
+    buildpacks:
+      - staticfile_buildpack
+    # UI:  https://nexus-ui.cfapps.eu10-004.hana.ondemand.com
+    # API: https://nexus-api.cfapps.eu10-004.hana.ondemand.com  (hardcoded in src/lib/api.ts)
+
+
