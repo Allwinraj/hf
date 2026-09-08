@@ -1,191 +1,66 @@
-JOURNEY 5 — Purchase requisitions from unread email (Procure-to-Pay)
-Owner review pack  ·  try this in Architect; mark anything that does not match
+import requests
+from requests.auth import HTTPBasicAuth
 
-What this proves
-----------------
-Same Nexus Architect as bank recon and invoice match. Different process.
-Working file is a sample .eml (body + optional PDF). Run reads live unread Gmail,
-keeps PR/PO subjects, drafts replies vs policy. A human Send on the dashboard
-is required — the pipeline never SMTP-sends on its own.
+BASE_URL = "https://my426575-api.s4hana.cloud.sap/sap/opu/odata/sap/API_PURCHASEORDER_PROCESS_SRV"
+USERNAME = "PUR_CONTRACT_USER"
+PASSWORD = "Hdq/KPrP2Q>8y-x{3y#Hr(z>z3Bn+=+062@H7Vwd"
 
-CSV / XLSX journeys are unchanged. Mailbox canvas only appears when the working
-file is .eml. Extraction reads that mail; it is not hardcoded to laptops or Bengaluru.
+payload = {
+    "CompanyCode": "2000",
+    "DocumentCurrency": "INR",
+    "PurchaseOrderType": "NB",
+    "PurchasingGroup": "001",
+    "PurchasingOrganization": "2000",
+    "Supplier": "1000000",
+    "to_PurchaseOrderItem": {
+        "results": [
+            {
+                "AccountAssignmentCategory": "K",
+                "MaterialGroup": "P002",
+                "NetPriceAmount": "10000",
+                "OrderQuantity": "5",
+                "Plant": "2001",
+                "ProductType": "1",
+                "PurchaseOrderItemText": "Laptop Purchase",
+                "PurchaseOrderQuantityUnit": "EA",
+                "to_AccountAssignment": {
+                    "results": [
+                        {
+                            "CostCenter": "INPURSER",
+                            "GLAccount": "65001000",
+                        }
+                    ]
+                },
+            }
+        ]
+    },
+}
 
-User: Procurement / AP, professional services.
-Goal: Turn unread PR-request mail into policy-checked draft replies; send only after approval.
+session = requests.Session()
+session.auth = HTTPBasicAuth(USERNAME, PASSWORD)
 
-v1 note: IMAP unread + dashboard SMTP after Send. No ERP write-back, Slack, or auto-send.
+url = f"{BASE_URL}/A_PurchaseOrder"
 
+token_resp = session.get(
+    url,
+    headers={"x-csrf-token": "Fetch", "Accept": "application/json"},
+)
 
---------------------------------------------------------------------------------
-THE FLOW WE WANT THE TEAM TO SIGN OFF
---------------------------------------------------------------------------------
+csrf_token = token_resp.headers.get("x-csrf-token")
+if not csrf_token:
+    print("Failed to fetch CSRF token")
+    print(token_resp.status_code, token_resp.text)
+    exit()
 
-  1. Three general questions
-        Who are you?  →  What industry?  →  What should AI improve?
-  2. Then the use case
-        What finance workflow do you want to build today?
-  3. Input files (working data)
-        Attach one .eml sample (body + PDF spec if attached)
-  4. Knowledge / policy
-        Attach purchase / IT hardware policy
-  5. Pipeline appears
-        Mailbox ingest (Gmail form) → Decision vs policy → Output drafts
-        No Matcher / Math unless this conversation asks for them
-  6. Interview (this journey only: at most 4)
-        Grounded in THIS mail: body vs PDF, which policy gates fail a PR, send details
-        Other journeys still use min 5 / max 12–15
-  7. Confirm the pipeline
-  8. Save to Super Agents  →  Run  →  Dashboard (draft table + Send)
+resp = session.post(
+    url,
+    json=payload,
+    headers={
+        "x-csrf-token": csrf_token,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    },
+)
 
-
---------------------------------------------------------------------------------
-HOW TO RUN THE DEMO
---------------------------------------------------------------------------------
-
-Start:  python run.py
-Open:   Architect (Create Agent)
-Files:  augmented-data/journey-05-pr-from-email/
-
-        PR_Request_New_Joiner_Laptops_Bengaluru.eml    working data (sample layout)
-        IT_Purchase_Policy.pdf                         knowledge / policy
-
-Mailbox on the ingest node (editable; not in .env / manifest):
-        IMAP imap.gmail.com:993
-        SMTP smtp.gmail.com:587
-        User / From  eyindia.nexus@gmail.com
-        Folder INBOX, unread only
-        App password is prefilled on the node
-
-Live inbox at design time had unread PR mails (laptops Bengaluru, stationery Mumbai,
-chairs Hyderabad) plus Google setup mail. Run must skip non-PR subjects.
-
-
---------------------------------------------------------------------------------
-SCRIPT — paste these replies in chat (in order)
---------------------------------------------------------------------------------
-
-WARM-UP (3 general questions)
-
-  1.  I'm a procurement analyst supporting Digital Technology purchases.
-
-  2.  Professional services — India offices, INR.
-
-  3.  Read new purchase-request emails, check them against policy, and draft replies I can send myself.
-
-USE CASE
-
-  4.  Purchase requisitions from email. Read unread inbox mail whose subject looks like a PR or purchase request, extract the ask from the body and any attached spec PDF, judge against our purchase policy, and draft a reply. Nothing should go out until I click Send on the dashboard.
-
-INPUT FILES
-
-  5.  Yes — I have a sample PR email saved as an .eml.
-
-      [Attach]  PR_Request_New_Joiner_Laptops_Bengaluru.eml
-
-KNOWLEDGE / POLICY
-
-  6.  Yes — attaching our IT / purchase policy.
-
-      [Attach]  IT_Purchase_Policy.pdf
-
-INTERVIEW (typical answers — wait for Nexus, then paste)
-Nexus should ask about this mail (qty, location, cost centre, budget, PDF spec),
-not about matching columns.
-
-  7.  Use the body for quantity, location, cost centre, due date and budget. Use the PDF for device spec, catalogue, supplier and substitution rules. If they differ, the PDF wins.
-
-  8.  Fail the PR if it is not a catalogue item, the supplier is not approved for IT hardware, the total including tax and delivery is over the stated budget, or they substituted without Digital Technology approval. Warn-only is not enough for those four.
-
-  9.  Draft from Nexus Procurement, plain professional tone, reply to the requester. A human must click Send or Don't send on the dashboard — never auto-send.
-
- 10.  Same layout for other unread PR subjects (other offices or item types). Skip mail whose subject is not a PR or purchase request.
-
-CONFIRM + SAVE + LIBRARY RUN
-
-      [Click] Confirm pipeline
-      Open the Mailbox ingest node — Gmail IMAP/SMTP fields should already be filled.
-      [Click] Save
-      You land in Super Agents library.
-      [Click] Run
-      Dashboard: unread fetched, PR kept, skipped noise, waiting send.
-      Table of drafts: Send all / Send / Don't send.
-      After Send, that row is sent via SMTP and marked sent.
-
-
---------------------------------------------------------------------------------
-WHAT NEXUS SHOULD BUILD (without the user saying "IMAP node")
---------------------------------------------------------------------------------
-
-User says                                              Pipeline should capture
------------------------------------------------        --------------------------------
-Unread PR mail from inbox                              Ingest mode=mailbox, SEARCH UNSEEN
-Subject looks like PR / PO / purchase                  Keep; skip Google setup etc.
-Body + PDF spec                                        Extract from that message, not constants
-Catalogue / supplier / budget / no substitution        Decision vs uploaded policy
-Draft, human Send                                      send_status=draft until dashboard
-
-Expected canvas
-
-  Mailbox (Gmail unread) ──► Decision (purchase policy) ──► Output (drafts / Excel)
-  Policy PDF ──────────────▲
-
-
---------------------------------------------------------------------------------
-WHAT SUCCESS LOOKS LIKE AFTER RUN
---------------------------------------------------------------------------------
-
-  • Google / 2-Step mail is not a PR row
-  • Each kept PR has subject, from, qty, item, location, needed_by, cost_centre, budget, spec
-  • Laptop Bengaluru sample (if still unread): 5 laptops, Bengaluru, CC-2040, Rs. 4,00,000,
-    spec from IT_Hardware_Requirement_Specification.pdf
-  • Stationery / chairs PRs extract their own item and location from those mails
-  • All drafts start as draft; SMTP only after Send
-  • Next Run does not pick the same mail (marked Seen)
-
-
---------------------------------------------------------------------------------
-TEAM SIGN-OFF
---------------------------------------------------------------------------------
-
-  [ ] 1. First three questions stay general (role, industry, AI priorities)
-  [ ] 2. Fourth question is the use case
-  [ ] 3. Working file is .eml, then policy
-  [ ] 4. Interview is at most 4 and about this mail (not column mapping)
-  [ ] 5. Mailbox node shows prefilled Gmail config
-  [ ] 6. CSV journeys (invoice / bank / cash apply) still work as before
-  [ ] 7. Run uses unread IMAP; dashboard Send / Don't send / Send all
-  [ ] 8. Confirm, Save, library Run
-
-Owner: __________________    Date: __________    OK / changes needed: __________
-
-
---------------------------------------------------------------------------------
-QUICK COPY (chat only — happy path)
---------------------------------------------------------------------------------
-
-I'm a procurement analyst supporting Digital Technology purchases.
-Professional services — India offices, INR.
-Read new purchase-request emails, check them against policy, and draft replies I can send myself.
-Purchase requisitions from email. Read unread inbox mail whose subject looks like a PR or purchase request, extract the ask from the body and any attached spec PDF, judge against our purchase policy, and draft a reply. Nothing should go out until I click Send on the dashboard.
-Yes — I have a sample PR email saved as an .eml.
-Yes — attaching our IT / purchase policy.
-Use the body for quantity, location, cost centre, due date and budget. Use the PDF for device spec, catalogue, supplier and substitution rules. If they differ, the PDF wins.
-Fail the PR if it is not a catalogue item, the supplier is not approved for IT hardware, the total including tax and delivery is over the stated budget, or they substituted without Digital Technology approval. Warn-only is not enough for those four.
-Draft from Nexus Procurement, plain professional tone, reply to the requester. A human must click Send or Don't send on the dashboard — never auto-send.
-Same layout for other unread PR subjects. Skip mail whose subject is not a PR or purchase request.
-
-
----
-applications:
-  - name: nexus-ui
-    memory: 128M
-    disk_quota: 256M
-    instances: 1
-    timeout: 180
-    buildpacks:
-      - staticfile_buildpack
-    # UI:  https://nexus-ui.cfapps.eu10-004.hana.ondemand.com
-    # API: https://nexus-api.cfapps.eu10-004.hana.ondemand.com  (hardcoded in src/lib/api.ts)
-
-
+print(resp.status_code)
+print(resp.text)
